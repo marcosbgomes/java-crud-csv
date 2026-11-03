@@ -2,8 +2,8 @@
 
 Aplicação desktop usando Java para manipulação de arquivos CSV e realização de operações CRUD (Create, Read, Update e Delete).
 
-> [!IMPORTANT]
-> **Nota**
+> [!NOTE]
+> **Finalidade do projeto**
 >
 > Aplicação para fins de estudo e aprendizagem, com o objetivo de praticar Java, Java Swing, operações CRUD e manipulação de arquivos CSV.
 
