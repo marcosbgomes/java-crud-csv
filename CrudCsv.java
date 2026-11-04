@@ -12,17 +12,21 @@ import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 import java.lang.Object;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.plaf.metal.MetalComboBoxUI;
 
 
 public class CrudCsv {
@@ -295,10 +299,45 @@ public class CrudCsv {
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelConsultar = new Panel(1, card, cardConteudo);
-        painelConsultar.add2(
-            new Label("Consultar", 2),
-            BorderLayout.CENTER
+        JPanel camposDados = new JPanel(new GridBagLayout());
+        camposDados.setBackground(branco);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 15, 0, 15);
+
+        // Painel para os botões
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        botoes.setBackground(branco);
+        // Label com texto
+        botoes.add(new Rotulo("Burcar por"));
+        // Opções de busca
+        String[] opcoes = {
+            "Título",
+            "Autor",
+            "Ano",
+            "Gênero"
+        };
+        ComboBox opcaoBusca = new ComboBox(opcoes);
+        opcaoBusca.setSelectedIndex(0);
+        botoes.add(opcaoBusca);
+        // Campo para inserir texto da busca
+        TextField txtBusca = new TextField();
+        txtBusca.setPreferredSize(
+            new Dimension(180, txtBusca.getPreferredSize().height)
         );
+        botoes.add(txtBusca);
+        Button buscar = new Button("Buscar", bgBotao2, branco, hoverBotao2);
+        botoes.add(buscar);
+        camposDados.add(botoes, gbc);
+
+        // Painel para a tabela com os dados
+        gbc.gridy = 1;
+        JPanel areaTabela = new JPanel();
+        camposDados.add(areaTabela, gbc);
+
+        painelConsultar.add2(camposDados, BorderLayout.NORTH);
         cardConteudo.add(painelConsultar, "consultar");
     }
 
@@ -370,6 +409,54 @@ public class CrudCsv {
         private void texto() {
             this.setFont(new Font("Arial", Font.BOLD, 12));
             this.setForeground(cinza);
+        }
+    }
+
+    static class ComboBoxUI extends MetalComboBoxUI {
+        @Override
+        protected void installDefaults() {
+            super.installDefaults();
+            comboBox.setBorder(BorderFactory.createEmptyBorder());
+        }
+
+        @Override
+        protected JButton createArrowButton() {
+            JButton botao = super.createArrowButton();
+            botao.setBorder(
+                BorderFactory.createEmptyBorder()
+            );
+            return botao;
+        }
+
+        @Override
+        public void paintCurrentValueBackground(
+            Graphics g, Rectangle bounds, boolean hasFocus
+        ) {
+            // Não desenha o contorno.
+        }
+    }
+
+    static class ComboBox extends JComboBox<String> {
+        public ComboBox(String[] arg0) {
+            super(arg0);
+            personalizar();
+        }
+
+        private void personalizar() {
+            // Utiliza um ComboBoxUI personalizado
+            this.setUI(new ComboBoxUI());
+            // Cor, tamanho e fonte
+            this.setBackground(branco);
+            this.setFont(new Font("Arial", Font.PLAIN, 14));
+            this.setPreferredSize(new Dimension(90, 28));
+            // Cria uma borda
+            this.setBorder(
+                BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(
+                        azulClaro, 1
+                    ),
+                    BorderFactory.createEmptyBorder(2, 5, 2, 5)
+            ));
         }
     }
 
