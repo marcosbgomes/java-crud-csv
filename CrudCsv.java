@@ -2,6 +2,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.event.WindowEvent;
@@ -14,11 +15,13 @@ import java.awt.Component;
 
 import java.lang.Object;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 
@@ -233,7 +236,58 @@ public class CrudCsv {
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelAdicionar = new Panel(0, card, cardConteudo);
-        painelAdicionar.add2(new Label("Adicionar", 2), BorderLayout.CENTER);
+
+        JPanel camposDados = new JPanel(new GridBagLayout());
+        camposDados.setBackground(branco);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(20, 20, 0, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.EAST;
+        camposDados.add(new Rotulo("Título"), gbc);
+        gbc.gridy = 1;
+        gbc.insets = new Insets(10, 20, 0, 5);
+        camposDados.add(new Rotulo("Autor"), gbc);
+        gbc.gridy = 2;
+        camposDados.add(new Rotulo("Ano"), gbc);
+        gbc.gridy = 3;
+        camposDados.add(new Rotulo("Gênero"), gbc);
+
+        gbc.weightx = 1.0;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(20, 5, 0, 20);
+        // gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        TextField tituloLivro = new TextField();
+        camposDados.add(tituloLivro, gbc);
+        TextField autorLivro = new TextField();
+        gbc.insets = new Insets(10, 5, 0, 20);
+        gbc.gridy = 1;
+        camposDados.add(autorLivro, gbc);
+        TextField anoLivro = new TextField();
+        gbc.gridy = 2;
+        camposDados.add(anoLivro, gbc);
+        TextField generoLivro = new TextField();
+        gbc.gridy = 3;
+        camposDados.add(generoLivro, gbc);
+
+        // Botões
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.insets.top = 15;
+        gbc.gridwidth = 2;
+        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        botoes.setBackground(branco);
+        Button limpar = new Button("Limpar", bgBotao2, branco, hoverBotao2);
+        limpar.setPreferredSize(new Dimension(100, 28));
+        botoes.add(limpar);
+        Button salvar = new Button("Salvar", bgBotao2, branco, hoverBotao2);
+        salvar.setPreferredSize(new Dimension(100, 28));
+        botoes.add(salvar);
+        camposDados.add(botoes, gbc);
+        painelAdicionar.add2(camposDados, BorderLayout.NORTH);
+
         cardConteudo.add(painelAdicionar, "adicionar");
     }
 
@@ -281,6 +335,13 @@ public class CrudCsv {
         }
     }
 
+    static class Rotulo extends JLabel {
+        public Rotulo(String texto) {
+            super(texto);
+            this.setFont(new Font("Arial", Font.PLAIN, 14));
+        }
+    }
+
     static class Label extends JLabel {
         public Label(String texto, int tipo) {
             super(texto);
@@ -309,6 +370,21 @@ public class CrudCsv {
         private void texto() {
             this.setFont(new Font("Arial", Font.BOLD, 12));
             this.setForeground(cinza);
+        }
+    }
+
+    static class TextField extends JTextField {
+        public TextField() {
+            this.setFont(new Font("Arial", Font.PLAIN, 16));
+            int width = this.getPreferredSize().width;
+            this.setPreferredSize(new Dimension(width, 28));
+            this.setBorder(
+                BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(
+                        azulClaro, 1
+                    ),
+                    BorderFactory.createEmptyBorder(2, 5, 2, 5)
+            ));
         }
     }
 
