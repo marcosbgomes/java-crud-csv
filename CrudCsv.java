@@ -430,7 +430,7 @@ public class CrudCsv {
         // Preenchimento para teste
         for (int i = 1; i < 40; i++) {
             dadosTabela.addRow(new Object[] {
-                "Título " + i, "Autor " + i, "Ano " + i, "Gênero " + i
+                "Título " + i, "Autor " + i, 2011, "Fantasia"
             });
         }
         Table tabela = new Table(dadosTabela);
@@ -449,7 +449,6 @@ public class CrudCsv {
         camposAtualizar.setBackground(branco);
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.insets = new Insets(5, 5, 0, 0);
-        // gbc2.fill = GridBagConstraints.HORIZONTAL;
         gbc2.weightx = 1.0;
         gbc2.gridx = 0;
         gbc2.gridy = 0;
@@ -510,21 +509,98 @@ public class CrudCsv {
             new Dimension(150, 28)
         );
         camposAtualizar.add(genero, gbc2);
-        
+
         camposDados.add(camposAtualizar, gbc);
 
         painelAtualizar.add2(camposDados, BorderLayout.NORTH);
         cardConteudo.add(painelAtualizar, "atualizar");
+
+        // Evento: Preencher a área de atualização ao clicar em uma linha
+        tabela.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int linha = tabela.getSelectedRow();
+                if (linha != -1) {
+                    // System.out.println("Título: " + tabela.getValueAt(linha, 0));
+                    // System.out.println(" Autor: " + tabela.getValueAt(linha, 1));
+                    titulo.setText(tabela.getValueAt(linha, 0).toString());
+                    autor.setText(tabela.getValueAt(linha, 1).toString());
+                    anoPublicacao.setValue(tabela.getValueAt(linha, 2));
+                    genero.setSelectedItem(tabela.getValueAt(linha, 3));
+                }
+            }
+        });
     }
 
     private static void criarAbaApagar(
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelApagar = new Panel(3, card, cardConteudo);
-        painelApagar.add2(
-            new Label("Apagar", 2),
-            BorderLayout.CENTER
+
+        JPanel camposDados = new JPanel(new GridBagLayout());
+        camposDados.setBackground(branco);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 15, 0, 15);
+
+        // Painel para os botões
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        botoes.setBackground(branco);
+        // Label com texto
+        botoes.add(new Rotulo("Burcar por"));
+        // Opções de busca
+        String[] opcoes = {
+            "Título",
+            "Autor",
+            "Ano",
+            "Gênero"
+        };
+        ComboBox opcaoBusca = new ComboBox(opcoes);
+        opcaoBusca.setSelectedIndex(0);
+        botoes.add(opcaoBusca);
+        // Campo para inserir texto da busca
+        TextField txtBusca = new TextField();
+        txtBusca.setPreferredSize(
+            new Dimension(180, txtBusca.getPreferredSize().height)
         );
+        botoes.add(txtBusca);
+        Button buscar = new Button("Buscar", bgBotao2, branco, hoverBotao2);
+        buscar.setPreferredSize(new Dimension(80, 28));
+        botoes.add(buscar);
+        camposDados.add(botoes, gbc);
+
+        // Painel para a tabela com os dados
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        JPanel areaTabela = new JPanel(new BorderLayout());
+        String[] colunas = {"Título", "Autor", "Ano", "Gênero"};
+        DefaultTableModel  dadosTabela = new DefaultTableModel(colunas, 0);
+        // Preenchimento para teste
+        for (int i = 1; i < 40; i++) {
+            dadosTabela.addRow(new Object[] {
+                "Título " + i, "Autor " + i, 2011, "Fantasia"
+            });
+        }
+        Table tabela = new Table(dadosTabela);
+        tabela.setDefaultEditor(Object.class, null);
+        JScrollPane scroll = new JScrollPane(tabela);
+        areaTabela.add(scroll, BorderLayout.CENTER);
+        areaTabela.setPreferredSize(
+            new Dimension(areaTabela.getPreferredSize().width, 170)
+        );
+        camposDados.add(areaTabela, gbc);
+
+        // Botão de esxluir
+        Button excluir = new Button(
+            "Excluir", bgBotao2, branco, hoverBotao2
+        );
+        excluir.setPreferredSize(new Dimension(200, 26));
+        gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        camposDados.add(excluir, gbc);
+
+        painelApagar.add2(camposDados, BorderLayout.NORTH);
         cardConteudo.add(painelApagar, "apagar");
     }
 
@@ -700,7 +776,7 @@ public class CrudCsv {
             // Remove o grid
             this.setShowGrid(false);
             // Largura da coluna de indice 2
-            this.getColumnModel().getColumn(2).setPreferredWidth(30);
+            this.getColumnModel().getColumn(2).setPreferredWidth(20);
             // Só permite selecionar uma linha por vez
             this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         }
