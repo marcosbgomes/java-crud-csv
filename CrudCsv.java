@@ -23,10 +23,20 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.plaf.metal.MetalComboBoxUI;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableModel;
 
 
 public class CrudCsv {
@@ -261,7 +271,6 @@ public class CrudCsv {
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.insets = new Insets(20, 5, 0, 20);
-        // gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         TextField tituloLivro = new TextField();
         camposDados.add(tituloLivro, gbc);
@@ -269,10 +278,26 @@ public class CrudCsv {
         gbc.insets = new Insets(10, 5, 0, 20);
         gbc.gridy = 1;
         camposDados.add(autorLivro, gbc);
-        TextField anoLivro = new TextField();
+
+        // TextField anoLivro = new TextField();
+        Spinner anoLivro = new Spinner(
+            new SpinnerNumberModel(2026, 1, 2026, 1)
+        );
         gbc.gridy = 2;
         camposDados.add(anoLivro, gbc);
-        TextField generoLivro = new TextField();
+
+        // TextField generoLivro = new TextField();
+        String[] opcoes = {
+            "Ficção Científica",
+            "Fantasia",
+            "Mistério",
+            "Autoajuda",
+            "Ciências e Tecnologia",
+            "Terror",
+            "Romance",
+        };
+        ComboBox generoLivro = new ComboBox(opcoes);
+        generoLivro.setSelectedIndex(0);
         gbc.gridy = 3;
         camposDados.add(generoLivro, gbc);
 
@@ -329,12 +354,29 @@ public class CrudCsv {
         );
         botoes.add(txtBusca);
         Button buscar = new Button("Buscar", bgBotao2, branco, hoverBotao2);
+        buscar.setPreferredSize(new Dimension(80, 28));
         botoes.add(buscar);
         camposDados.add(botoes, gbc);
 
         // Painel para a tabela com os dados
         gbc.gridy = 1;
-        JPanel areaTabela = new JPanel();
+        gbc.fill = GridBagConstraints.BOTH;
+        JPanel areaTabela = new JPanel(new BorderLayout());
+        String[] colunas = {"Título", "Autor", "Ano", "Gênero"};
+        DefaultTableModel  dadosTabela = new DefaultTableModel(colunas, 0);
+        // Preenchimento para teste
+        for (int i = 1; i < 40; i++) {
+            dadosTabela.addRow(new Object[] {
+                "Título " + i, "Autor " + i, "Ano " + i, "Gênero " + i
+            });
+        }
+        Table tabela = new Table(dadosTabela);
+        tabela.setDefaultEditor(Object.class, null);
+        JScrollPane scroll = new JScrollPane(tabela);
+        areaTabela.add(scroll, BorderLayout.CENTER);
+        areaTabela.setPreferredSize(
+            new Dimension(areaTabela.getPreferredSize().width, 220)
+        );
         camposDados.add(areaTabela, gbc);
 
         painelConsultar.add2(camposDados, BorderLayout.NORTH);
@@ -345,10 +387,133 @@ public class CrudCsv {
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelAtualizar = new Panel(2, card, cardConteudo);
-        painelAtualizar.add2(
-            new Label("Atualizar", 2),
-            BorderLayout.CENTER
+        JPanel camposDados = new JPanel(new GridBagLayout());
+        camposDados.setBackground(branco);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 15, 0, 15);
+
+        // Painel para os botões
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        botoes.setBackground(branco);
+        // Label com texto
+        botoes.add(new Rotulo("Burcar por"));
+        // Opções de busca
+        String[] opcoes = {
+            "Título",
+            "Autor",
+            "Ano",
+            "Gênero"
+        };
+        ComboBox opcaoBusca = new ComboBox(opcoes);
+        opcaoBusca.setSelectedIndex(0);
+        botoes.add(opcaoBusca);
+        // Campo para inserir texto da busca
+        TextField txtBusca = new TextField();
+        txtBusca.setPreferredSize(
+            new Dimension(180, txtBusca.getPreferredSize().height)
         );
+        botoes.add(txtBusca);
+        Button buscar = new Button("Buscar", bgBotao2, branco, hoverBotao2);
+        buscar.setPreferredSize(new Dimension(80, 28));
+        botoes.add(buscar);
+        camposDados.add(botoes, gbc);
+
+        // Painel para a tabela com os dados
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        JPanel areaTabela = new JPanel(new BorderLayout());
+        String[] colunas = {"Título", "Autor", "Ano", "Gênero"};
+        DefaultTableModel  dadosTabela = new DefaultTableModel(colunas, 0);
+        // Preenchimento para teste
+        for (int i = 1; i < 40; i++) {
+            dadosTabela.addRow(new Object[] {
+                "Título " + i, "Autor " + i, "Ano " + i, "Gênero " + i
+            });
+        }
+        Table tabela = new Table(dadosTabela);
+        tabela.setDefaultEditor(Object.class, null);
+        JScrollPane scroll = new JScrollPane(tabela);
+        areaTabela.add(scroll, BorderLayout.CENTER);
+        areaTabela.setPreferredSize(
+            new Dimension(areaTabela.getPreferredSize().width, 100)
+        );
+        camposDados.add(areaTabela, gbc);
+
+        // Campos para atualização de informações
+        gbc.gridy = 2;
+        gbc.insets.top = 10;
+        JPanel camposAtualizar = new JPanel(new GridBagLayout());
+        camposAtualizar.setBackground(branco);
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.insets = new Insets(5, 5, 0, 0);
+        // gbc2.fill = GridBagConstraints.HORIZONTAL;
+        gbc2.weightx = 1.0;
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.gridwidth = 4;
+        gbc2.insets.bottom = 5;
+        Button atualizar = new Button(
+            "Atualizar", bgBotao2, branco, hoverBotao2
+        );
+        atualizar.setPreferredSize(
+            new Dimension(150, 26)
+        );
+        camposAtualizar.add(atualizar, gbc2);
+        gbc2.anchor = GridBagConstraints.EAST;
+        gbc2.insets.bottom = 0;
+        gbc2.gridwidth = 1;
+        gbc2.gridy = 1;
+        camposAtualizar.add(new Rotulo("Título"), gbc2);
+        gbc2.gridx = 1;
+        TextField titulo = new TextField();
+        titulo.setPreferredSize(
+            new Dimension(200, 28)
+        );
+        camposAtualizar.add(titulo, gbc2);
+        gbc2.gridx = 2;
+        camposAtualizar.add(new Rotulo("Ano"), gbc2);
+        gbc2.gridx = 3;
+        Spinner anoPublicacao = new Spinner(
+            new SpinnerNumberModel(2026, 1, 2026, 1)
+        );
+        anoPublicacao.setPreferredSize(
+            new Dimension(150, 28)
+        );
+        camposAtualizar.add(anoPublicacao, gbc2);
+
+        gbc2.gridx = 0;
+        gbc2.gridy = 2;
+        camposAtualizar.add(new Rotulo("Autor"), gbc2);
+        gbc2.gridx = 1;
+        TextField autor = new TextField();
+        autor.setPreferredSize(
+            new Dimension(200, 28)
+        );
+        camposAtualizar.add(autor, gbc2);
+        gbc2.gridx = 2;
+        camposAtualizar.add(new Rotulo("Gênero"), gbc2);
+        gbc2.gridx = 3;
+        String[] opcoesGenero = {
+            "Ficção Científica",
+            "Fantasia",
+            "Mistério",
+            "Autoajuda",
+            "Ciências e Tecnologia",
+            "Terror",
+            "Romance",
+        };
+        ComboBox genero = new ComboBox(opcoesGenero);
+        genero.setPreferredSize(
+            new Dimension(150, 28)
+        );
+        camposAtualizar.add(genero, gbc2);
+        
+        camposDados.add(camposAtualizar, gbc);
+
+        painelAtualizar.add2(camposDados, BorderLayout.NORTH);
         cardConteudo.add(painelAtualizar, "atualizar");
     }
 
@@ -363,7 +528,7 @@ public class CrudCsv {
         cardConteudo.add(painelApagar, "apagar");
     }
 
-    static class Window extends JFrame {
+    private static class Window extends JFrame {
         public Window(String titulo) {
             super(titulo);
             // Configurações da janela
@@ -374,14 +539,14 @@ public class CrudCsv {
         }
     }
 
-    static class Rotulo extends JLabel {
+    private static class Rotulo extends JLabel {
         public Rotulo(String texto) {
             super(texto);
             this.setFont(new Font("Arial", Font.PLAIN, 14));
         }
     }
 
-    static class Label extends JLabel {
+    private static class Label extends JLabel {
         public Label(String texto, int tipo) {
             super(texto);
 
@@ -412,7 +577,7 @@ public class CrudCsv {
         }
     }
 
-    static class ComboBoxUI extends MetalComboBoxUI {
+    private static class ComboBoxUI extends MetalComboBoxUI {
         @Override
         protected void installDefaults() {
             super.installDefaults();
@@ -436,7 +601,7 @@ public class CrudCsv {
         }
     }
 
-    static class ComboBox extends JComboBox<String> {
+    private static class ComboBox extends JComboBox<String> {
         public ComboBox(String[] arg0) {
             super(arg0);
             personalizar();
@@ -460,7 +625,22 @@ public class CrudCsv {
         }
     }
 
-    static class TextField extends JTextField {
+    private static class Spinner extends JSpinner {
+        public Spinner(SpinnerModel model) {
+            super(model);
+
+            this.setBackground(branco);
+            this.setFont(new Font("Arial", Font.PLAIN, 16));
+            this.setPreferredSize(new Dimension(90, 28));
+            this.setBorder(
+                BorderFactory.createLineBorder(
+                    azulClaro, 1
+                )
+            );
+        }
+    }
+
+    private static class TextField extends JTextField {
         public TextField() {
             this.setFont(new Font("Arial", Font.PLAIN, 16));
             int width = this.getPreferredSize().width;
@@ -475,7 +655,58 @@ public class CrudCsv {
         }
     }
 
-    static class Panel extends JPanel {
+    // Remove bordas de células selecionada
+    private static class RendererCellTable extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(
+            JTable tabela, Object valor, boolean selecionado,
+            boolean foco, int linha, int coluna
+        ) {
+            super.getTableCellRendererComponent(
+                tabela, valor, selecionado, foco, linha, coluna
+            );
+
+            this.setBorder(BorderFactory.createEmptyBorder());
+
+            return this;
+        }
+    }
+
+    private static class Table extends JTable {
+        public Table(TableModel dm){
+            super(dm);
+
+            this.setDefaultRenderer(
+                Object.class,
+                new RendererCellTable()
+            );
+
+            // Cabeçalho
+            JTableHeader header = this.getTableHeader();
+            header.setFont( new Font("Arial", Font.BOLD, 12));
+            header.setBackground(azulClaro);
+            header.setForeground(branco);
+            header.setPreferredSize(new Dimension(0, 20));
+
+            this.setFont(new Font("Arial", Font.PLAIN, 12));
+            this.setRowHeight(20);
+            this.setBackground(branco);
+            this.setForeground(Color.BLACK);
+
+            // Cor da seleção
+            this.setSelectionBackground(bgBotao);
+            this.setSelectionForeground(Color.BLACK);
+
+            // Remove o grid
+            this.setShowGrid(false);
+            // Largura da coluna de indice 2
+            this.getColumnModel().getColumn(2).setPreferredWidth(30);
+            // Só permite selecionar uma linha por vez
+            this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        }
+    }
+
+    private static class Panel extends JPanel {
         // Painel onde uma instância adiciona o conteúdo
         private JPanel conteudo = new JPanel(new BorderLayout());
 
@@ -577,7 +808,7 @@ public class CrudCsv {
         }
     }
 
-    static class Button extends JButton {
+    private static class Button extends JButton {
         public Button(String texto, Color bg, Color fg, Color hover) {
             super(texto);
 
