@@ -249,16 +249,19 @@ public class CrudCsv {
 
         // Muda para a aba de consultar
         consultar.addActionListener(e -> {
+            preencherTabela(telaConsultaBusca);
             card.show(cardConteudo, "consultar");
         });
 
         // Muda para a aba de atualizar
         atualizar.addActionListener(e -> {
+            preencherTabela(telaAtualizarBusca);
             card.show(cardConteudo, "atualizar");
         });
 
         // Muda para a aba de apagar
         apagar.addActionListener(e -> {
+            preencherTabela(telaApagarBusca);
             card.show(cardConteudo, "apagar");
         });
     }
@@ -722,12 +725,6 @@ public class CrudCsv {
             String[] colunas = {"Título", "Autor", "Ano", "Gênero"};
             this.dadosTabela = new DefaultTableModel(colunas, 0);
 
-            // Preenchimento para teste
-            for (int i = 1; i < 40; i++) {
-                this.dadosTabela.addRow(new Object[] {
-                    "Título " + i, "Autor " + i, 2026, "Fantasia"
-                });
-            }
             // Tabela
             this.tabela = new Table(this.dadosTabela);
             this.tabela.setDefaultEditor(Object.class, null);
@@ -759,6 +756,35 @@ public class CrudCsv {
 
         ComboBox getOpcaoBusca() {
             return opcaoBusca;
+        }
+    }
+
+    private void preencherTabela(PainelBuscaTabela telaTabela) {
+        if (telaTabela == null) return;
+
+        // Limpa as linhas da tabela
+        telaTabela.getDadosTabela().setRowCount(0);
+
+        File arquivo = new File("livros.csv");
+        if (!arquivo.exists()) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(arquivo))) {
+            String linha = reader.readLine();  // Pula o cabeçalho
+
+            while ((linha = reader.readLine()) != null) {
+                Livro livro = Livro.fromCsv(linha);
+
+                if (livro != null) {
+                    telaTabela.getDadosTabela().addRow(livro.toLinhaTabela());
+                }
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(
+                null,
+                "Erro ao abrir 'livros.csv'.",
+                "Erro de arquivo",
+                JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
@@ -937,6 +963,9 @@ public class CrudCsv {
             this.getColumnModel().getColumn(2).setPreferredWidth(20);
             // Só permite selecionar uma linha por vez
             this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+            // Preenche o plano de fundo do restante da tabela caso tenha poucas linhas
+            this.setFillsViewportHeight(true);
         }
     }
 
