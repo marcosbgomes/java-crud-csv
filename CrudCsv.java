@@ -11,6 +11,8 @@ import java.awt.Insets;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Rectangle;
@@ -50,8 +52,13 @@ public class CrudCsv {
     // Minha janela principal
     private Window window = new Window("CRUD de Livros");
 
+    // Paineis das tabelas
+    private PainelBuscaTabela telaConsultaBusca;
+    private PainelBuscaTabela telaAtualizarBusca;
+    private PainelBuscaTabela telaApagarBusca;
+
     // Cores
-    private static final Color BG_SEDUNDARIO = new Color(23, 55, 64);
+    private static final Color BG_SECUNDARIO = new Color(23, 55, 64);
     private static final Color BG_PRIMARIO = new Color(255, 255, 255);
     private static final Color BRANCO = new Color(255, 255, 255);
     private static final Color CINZA = new Color(148, 148, 148);
@@ -78,18 +85,18 @@ public class CrudCsv {
         JPanel cardConteudo = new JPanel(card);
 
         // Métodos das operações
-        criarAbaInicio(card, cardConteudo);
-        criarAbaAdicionar(card, cardConteudo);
-        criarAbaConsultar(card, cardConteudo);
-        criarAbaAtualizar(card, cardConteudo);
-        criarAbaApagar(card, cardConteudo);
+        criarTelaInicio(card, cardConteudo);
+        criarTelaAdicionar(card, cardConteudo);
+        criarTelaConsultar(card, cardConteudo);
+        criarTelaAtualizar(card, cardConteudo);
+        criarTelaApagar(card, cardConteudo);
 
         window.add(cardConteudo);
 
         window.setVisible(true);
     }
 
-    private void criarAbaInicio(
+    private void criarTelaInicio(
         CardLayout card, JPanel cardConteudo
     ) {
         // Painel principal da tela de início
@@ -97,13 +104,13 @@ public class CrudCsv {
 
         // Painel esquerdo para funcionalidades
         JPanel menu = new JPanel(new BorderLayout());
-        menu.setBackground(BG_SEDUNDARIO);
+        menu.setBackground(BG_SECUNDARIO);
         menu.setPreferredSize(new Dimension(250, 400));
 
         GridBagConstraints gbc = new GridBagConstraints();
 
         JPanel titulo = new JPanel(new GridBagLayout());
-        titulo.setBackground(BG_SEDUNDARIO);
+        titulo.setBackground(BG_SECUNDARIO);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets.top = 30;
@@ -125,7 +132,7 @@ public class CrudCsv {
 
         // Painel inferior esquerdo para botão de saída
         JPanel saida = new JPanel(new BorderLayout());
-        saida.setBackground(BG_SEDUNDARIO);
+        saida.setBackground(BG_SECUNDARIO);
         Button sair = new Button("[🡐", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
         sair.setMargin(new Insets(0, 3, 0, 0));
         sair.setFont(new Font(null, Font.PLAIN, 24));
@@ -135,7 +142,7 @@ public class CrudCsv {
 
         // Painel para os botões das operações CRUD
         JPanel botoesCrud = new JPanel(new GridBagLayout());
-        botoesCrud.setBackground(BG_SEDUNDARIO);
+        botoesCrud.setBackground(BG_SECUNDARIO);
         gbc.insets = new Insets(5, 10, 5, 10);  // Espaçamentos
 
         Dimension tamanhoBotoes = new Dimension(0, 28);
@@ -256,7 +263,7 @@ public class CrudCsv {
         });
     }
 
-    private void criarAbaAdicionar(
+    private void criarTelaAdicionar(
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelAdicionar = new Panel(0, card, cardConteudo);
@@ -389,133 +396,58 @@ public class CrudCsv {
             }
 
         });
+
+        // Limpar os campos ao sair da tela
+        painelAdicionar.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                tituloLivro.setText("");
+                autorLivro.setText("");
+                anoLivro.setValue(ANOATUAL);
+                generoLivro.setSelectedIndex(0);
+            }
+        });
     }
 
-    private void criarAbaConsultar(
+    private void criarTelaConsultar(
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelConsultar = new Panel(1, card, cardConteudo);
-        JPanel camposDados = new JPanel(new GridBagLayout());
-        camposDados.setBackground(BRANCO);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 15, 0, 15);
 
-        // Painel para os botões
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        botoes.setBackground(BRANCO);
-        // Label com texto
-        botoes.add(new Rotulo("Burcar por"));
-        // Opções de busca
-        String[] opcoes = {
-            "Título",
-            "Autor",
-            "Ano",
-            "Gênero"
-        };
-        ComboBox opcaoBusca = new ComboBox(opcoes);
-        opcaoBusca.setSelectedIndex(0);
-        botoes.add(opcaoBusca);
-        // Campo para inserir texto da busca
-        TextField txtBusca = new TextField();
-        txtBusca.setPreferredSize(
-            new Dimension(180, txtBusca.getPreferredSize().height)
-        );
-        botoes.add(txtBusca);
-        Button buscar = new Button("Buscar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
-        buscar.setPreferredSize(new Dimension(80, 28));
-        botoes.add(buscar);
-        camposDados.add(botoes, gbc);
+        telaConsultaBusca = new PainelBuscaTabela(220);
 
-        // Painel para a tabela com os dados
-        gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        JPanel areaTabela = new JPanel(new BorderLayout());
-        String[] colunas = {"Título", "Autor", "Ano", "Gênero"};
-        DefaultTableModel dadosTabela = new DefaultTableModel(colunas, 0);
-        // Preenchimento para teste
-        for (int i = 1; i < 40; i++) {
-            dadosTabela.addRow(new Object[] {
-                "Título " + i, "Autor " + i, "Ano " + i, "Gênero " + i
-            });
-        }
-        Table tabela = new Table(dadosTabela);
-        tabela.setDefaultEditor(Object.class, null);
-        JScrollPane scroll = new JScrollPane(tabela);
-        areaTabela.add(scroll, BorderLayout.CENTER);
-        areaTabela.setPreferredSize(
-            new Dimension(areaTabela.getPreferredSize().width, 220)
-        );
-        camposDados.add(areaTabela, gbc);
-
-        painelConsultar.add2(camposDados, BorderLayout.NORTH);
+        painelConsultar.add2(telaConsultaBusca, BorderLayout.NORTH);
         cardConteudo.add(painelConsultar, "consultar");
+
+        // Limpa a busca ao sair da tela
+        painelConsultar.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                telaConsultaBusca.getOpcaoBusca().setSelectedIndex(0);
+                telaConsultaBusca.getTxtBusca().setText("");
+            }
+        });
     }
 
-    private void criarAbaAtualizar(
+    private void criarTelaAtualizar(
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelAtualizar = new Panel(2, card, cardConteudo);
         JPanel camposDados = new JPanel(new GridBagLayout());
         camposDados.setBackground(BRANCO);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 15, 0, 15);
 
-        // Painel para os botões
+        // Tabela
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        botoes.setBackground(BRANCO);
-        // Label com texto
-        botoes.add(new Rotulo("Burcar por"));
-        // Opções de busca
-        String[] opcoes = {
-            "Título",
-            "Autor",
-            "Ano",
-            "Gênero"
-        };
-        ComboBox opcaoBusca = new ComboBox(opcoes);
-        opcaoBusca.setSelectedIndex(0);
-        botoes.add(opcaoBusca);
-        // Campo para inserir texto da busca
-        TextField txtBusca = new TextField();
-        txtBusca.setPreferredSize(
-            new Dimension(180, txtBusca.getPreferredSize().height)
-        );
-        botoes.add(txtBusca);
-        Button buscar = new Button("Buscar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
-        buscar.setPreferredSize(new Dimension(80, 28));
-        botoes.add(buscar);
-        camposDados.add(botoes, gbc);
-
-        // Painel para a tabela com os dados
-        gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        JPanel areaTabela = new JPanel(new BorderLayout());
-        String[] colunas = {"Título", "Autor", "Ano", "Gênero"};
-        DefaultTableModel  dadosTabela = new DefaultTableModel(colunas, 0);
-        // Preenchimento para teste
-        for (int i = 1; i < 40; i++) {
-            dadosTabela.addRow(new Object[] {
-                "Título " + i, "Autor " + i, 2011, "Fantasia"
-            });
-        }
-        Table tabela = new Table(dadosTabela);
-        tabela.setDefaultEditor(Object.class, null);
-        JScrollPane scroll = new JScrollPane(tabela);
-        areaTabela.add(scroll, BorderLayout.CENTER);
-        areaTabela.setPreferredSize(
-            new Dimension(areaTabela.getPreferredSize().width, 100)
-        );
-        camposDados.add(areaTabela, gbc);
+        telaAtualizarBusca = new PainelBuscaTabela(100);
+        camposDados.add(telaAtualizarBusca, gbc);
 
         // Campos para atualização de informações
-        gbc.gridy = 2;
-        gbc.insets.top = 10;
+        gbc.gridy = 1;
+        // gbc.insets.top = 10;
+        gbc.insets = new Insets(10, 15, 0, 15);
         JPanel camposAtualizar = new JPanel(new GridBagLayout());
         camposAtualizar.setBackground(BRANCO);
         GridBagConstraints gbc2 = new GridBagConstraints();
@@ -528,10 +460,9 @@ public class CrudCsv {
         Button atualizar = new Button(
             "Atualizar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2
         );
-        atualizar.setPreferredSize(
-            new Dimension(150, 26)
-        );
+        atualizar.setPreferredSize(new Dimension(150, 26));
         camposAtualizar.add(atualizar, gbc2);
+
         gbc2.anchor = GridBagConstraints.EAST;
         gbc2.insets.bottom = 0;
         gbc2.gridwidth = 1;
@@ -539,19 +470,16 @@ public class CrudCsv {
         camposAtualizar.add(new Rotulo("Título"), gbc2);
         gbc2.gridx = 1;
         TextField titulo = new TextField();
-        titulo.setPreferredSize(
-            new Dimension(200, 28)
-        );
+        titulo.setPreferredSize(new Dimension(200, 28));
         camposAtualizar.add(titulo, gbc2);
+
         gbc2.gridx = 2;
         camposAtualizar.add(new Rotulo("Ano"), gbc2);
         gbc2.gridx = 3;
         Spinner anoPublicacao = new Spinner(
             new SpinnerNumberModel(2026, 1, 2026, 1)
         );
-        anoPublicacao.setPreferredSize(
-            new Dimension(150, 28)
-        );
+        anoPublicacao.setPreferredSize(new Dimension(150, 28));
         camposAtualizar.add(anoPublicacao, gbc2);
 
         gbc2.gridx = 0;
@@ -563,6 +491,7 @@ public class CrudCsv {
             new Dimension(200, 28)
         );
         camposAtualizar.add(autor, gbc2);
+
         gbc2.gridx = 2;
         camposAtualizar.add(new Rotulo("Gênero"), gbc2);
         gbc2.gridx = 3;
@@ -576,101 +505,170 @@ public class CrudCsv {
             "Romance",
         };
         ComboBox genero = new ComboBox(opcoesGenero);
-        genero.setPreferredSize(
-            new Dimension(150, 28)
-        );
+        genero.setPreferredSize(new Dimension(150, 28));
         camposAtualizar.add(genero, gbc2);
 
         camposDados.add(camposAtualizar, gbc);
-
         painelAtualizar.add2(camposDados, BorderLayout.NORTH);
         cardConteudo.add(painelAtualizar, "atualizar");
 
         // Evento: Preencher a área de atualização ao clicar em uma linha
-        tabela.getSelectionModel().addListSelectionListener(e -> {
+        telaAtualizarBusca.getTabela().getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                int linha = tabela.getSelectedRow();
+                int linha = telaAtualizarBusca.getTabela().getSelectedRow();
                 if (linha != -1) {
-                    titulo.setText(tabela.getValueAt(linha, 0).toString());
-                    autor.setText(tabela.getValueAt(linha, 1).toString());
-                    anoPublicacao.setValue(tabela.getValueAt(linha, 2));
-                    genero.setSelectedItem(tabela.getValueAt(linha, 3));
+                    titulo.setText(telaAtualizarBusca.getTabela().getValueAt(linha, 0).toString());
+                    autor.setText(telaAtualizarBusca.getTabela().getValueAt(linha, 1).toString());
+                    anoPublicacao.setValue(telaAtualizarBusca.getTabela().getValueAt(linha, 2));
+                    genero.setSelectedItem(telaAtualizarBusca.getTabela().getValueAt(linha, 3));
                 }
+            }
+        });
+
+        // Limpar os campos ao exibir a tela
+        painelAtualizar.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                // Remove seleção da linha
+                telaAtualizarBusca.getTabela().clearSelection();
+                // Limpa texto de busca
+                telaAtualizarBusca.getOpcaoBusca().setSelectedIndex(0);
+                telaAtualizarBusca.getTxtBusca().setText("");
+                // Limpa os campos de atualização
+                titulo.setText("");
+                autor.setText("");
+                anoPublicacao.setValue(ANOATUAL);
+                genero.setSelectedIndex(0);
             }
         });
     }
 
-    private void criarAbaApagar(
+    private void criarTelaApagar(
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelApagar = new Panel(3, card, cardConteudo);
-
         JPanel camposDados = new JPanel(new GridBagLayout());
         camposDados.setBackground(BRANCO);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 15, 0, 15);
 
-        // Painel para os botões
+        // Tabela
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        botoes.setBackground(BRANCO);
-        // Label com texto
-        botoes.add(new Rotulo("Burcar por"));
-        // Opções de busca
-        String[] opcoes = {
-            "Título",
-            "Autor",
-            "Ano",
-            "Gênero"
-        };
-        ComboBox opcaoBusca = new ComboBox(opcoes);
-        opcaoBusca.setSelectedIndex(0);
-        botoes.add(opcaoBusca);
-        // Campo para inserir texto da busca
-        TextField txtBusca = new TextField();
-        txtBusca.setPreferredSize(
-            new Dimension(180, txtBusca.getPreferredSize().height)
-        );
-        botoes.add(txtBusca);
-        Button buscar = new Button("Buscar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
-        buscar.setPreferredSize(new Dimension(80, 28));
-        botoes.add(buscar);
-        camposDados.add(botoes, gbc);
-
-        // Painel para a tabela com os dados
-        gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        JPanel areaTabela = new JPanel(new BorderLayout());
-        String[] colunas = {"Título", "Autor", "Ano", "Gênero"};
-        DefaultTableModel  dadosTabela = new DefaultTableModel(colunas, 0);
-        // Preenchimento para teste
-        for (int i = 1; i < 40; i++) {
-            dadosTabela.addRow(new Object[] {
-                "Título " + i, "Autor " + i, 2011, "Fantasia"
-            });
-        }
-        Table tabela = new Table(dadosTabela);
-        tabela.setDefaultEditor(Object.class, null);
-        JScrollPane scroll = new JScrollPane(tabela);
-        areaTabela.add(scroll, BorderLayout.CENTER);
-        areaTabela.setPreferredSize(
-            new Dimension(areaTabela.getPreferredSize().width, 170)
-        );
-        camposDados.add(areaTabela, gbc);
+        telaApagarBusca = new PainelBuscaTabela(170);
+        camposDados.add(telaApagarBusca, gbc);
 
         // Botão de esxluir
         Button excluir = new Button(
             "Excluir", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2
         );
         excluir.setPreferredSize(new Dimension(200, 26));
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.fill = GridBagConstraints.NONE;
+        gbc.insets.top = 10;
         camposDados.add(excluir, gbc);
 
         painelApagar.add2(camposDados, BorderLayout.NORTH);
         cardConteudo.add(painelApagar, "apagar");
+
+        // Limpas os camos de busca
+        painelApagar.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                telaApagarBusca.getOpcaoBusca().setSelectedIndex(0);
+                telaApagarBusca.getTxtBusca().setText("");
+            }
+        });
+    }
+
+    private static class PainelBuscaTabela extends JPanel {
+        private ComboBox opcaoBusca;
+        private TextField txtBusca;
+        private Button buscar;
+        private Table tabela;
+        private DefaultTableModel dadosTabela;
+
+        PainelBuscaTabela(int alturaTabela) {
+            this.setLayout(new GridBagLayout());
+            this.setBackground(BRANCO);
+            GridBagConstraints gbc = new GridBagConstraints();
+
+            gbc.insets = new Insets(10, 15, 0, 15);
+            gbc.gridx = 0;  // primeira coluna
+            gbc.gridy = 0;  // primeira linha
+            gbc.fill = GridBagConstraints.HORIZONTAL;  // expande na horizontal
+
+            // Opções de busca
+            JPanel filtroBusca = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+            filtroBusca.setBackground(BRANCO);
+            // 01 - Rótulo
+            filtroBusca.add(new Rotulo("Buscar por"));
+            String[] opcoes = {"Título", "Autor", "Ano", "Gênero"};
+            // 02 - Opções da busca
+            this.opcaoBusca = new ComboBox(opcoes);
+            this.opcaoBusca.setSelectedIndex(0);
+            filtroBusca.add(this.opcaoBusca);
+            // 03 - Texto da busca
+            this.txtBusca = new TextField();
+            this.txtBusca.setPreferredSize(
+                new Dimension(180, txtBusca.getPreferredSize().height)
+            );
+            filtroBusca.add(this.txtBusca);
+            // 04 - Botão para realizar a busca
+            this.buscar = new Button(
+                "Bucar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2
+            );
+            this.buscar.setPreferredSize(new Dimension(80, 28));
+            filtroBusca.add(this.buscar);
+            // 05 - Adiciona o painel de opções no painel principal
+            this.add(filtroBusca, gbc);
+
+            // Painel, tabela e barra de rolagem
+            gbc.gridy = 1;  // segunda linha
+            gbc.fill = GridBagConstraints.BOTH;  // expande horizontal e vertical
+            JPanel areaTabela = new JPanel(new BorderLayout());
+            // Colunas da tabela
+            String[] colunas = {"Título", "Autor", "Ano", "Gênero"};
+            this.dadosTabela = new DefaultTableModel(colunas, 0);
+
+            // Preenchimento para teste
+            for (int i = 1; i < 40; i++) {
+                this.dadosTabela.addRow(new Object[] {
+                    "Título " + i, "Autor " + i, 2026, "Fantasia"
+                });
+            }
+            // Tabela
+            this.tabela = new Table(this.dadosTabela);
+            this.tabela.setDefaultEditor(Object.class, null);
+            // Painel com barra de rolagem
+            JScrollPane painelScroll = new JScrollPane(this.tabela);
+            areaTabela .add(painelScroll, BorderLayout.CENTER);
+            areaTabela.setPreferredSize(
+                new Dimension(areaTabela.getPreferredSize().width, alturaTabela)
+            );
+            // Adiciona a tabela no painel principal
+            this.add(areaTabela, gbc);
+        }
+
+        Table getTabela() {
+            return tabela;
+        }
+
+        DefaultTableModel getDadosTabela() {
+            return dadosTabela;
+        }
+
+        Button getBotaoBusca() {
+            return buscar;
+        }
+
+        TextField getTxtBusca() {
+            return txtBusca;
+        }
+
+        ComboBox getOpcaoBusca() {
+            return opcaoBusca;
+        }
     }
 
     private static class Window extends JFrame {
