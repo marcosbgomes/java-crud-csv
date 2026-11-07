@@ -15,13 +15,20 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.Object;
+import java.time.Year;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -41,27 +48,30 @@ import javax.swing.table.TableModel;
 
 public class CrudCsv {
     // Minha janela principal
-    private static Window window = new Window("CRUD de Livros");
+    private Window window = new Window("CRUD de Livros");
 
     // Cores
-    private static Color fundoMenu = new Color(23, 55, 64);
-    private static Color fundoPrimario = new Color(255, 255, 255);
-    private static Color branco = new Color(255, 255, 255);
-    private static Color cinza = new Color(148, 148, 148);
-    private static Color azulClaro = new Color(0, 175, 223);
-    private static Color bgBotao = new Color(255, 255, 176);
-    private static Color hoverBotao = new Color(255, 255, 200);
-    private static Color bgBotao2 = new Color(0, 74, 143);
-    private static Color hoverBotao2 = new Color(0, 86, 167);
+    private static final Color BG_SEDUNDARIO = new Color(23, 55, 64);
+    private static final Color BG_PRIMARIO = new Color(255, 255, 255);
+    private static final Color BRANCO = new Color(255, 255, 255);
+    private static final Color CINZA = new Color(148, 148, 148);
+    private static final Color AZUL_CLARO = new Color(0, 175, 223);
+    private static final Color BG_BOTAO = new Color(255, 255, 176);
+    private static final Color HOVER_BOTAO = new Color(255, 255, 200);
+    private static final Color BG_BOTAO_2 = new Color(0, 74, 143);
+    private static final Color HOVER_BOTAO_2 = new Color(0, 86, 167);
 
     // Fontes
-    private static Font fontBotoes = new Font("Arial", Font.BOLD, 14);
+    private static final Font FONT_BOTOES = new Font("Arial", Font.BOLD, 14);
+
+    private static final int ANOATUAL = Year.now().getValue();
 
     public static void main(String[] args) {
-        iniciar();
+        CrudCsv app = new CrudCsv();
+        app.iniciar();
     }
 
-    private static void iniciar() {
+    private void iniciar() {
         // Gerenciador de visualização (alterna entre as telas de cada operação)
         CardLayout card = new CardLayout();
         // Painel principal onde devem ficar as telas que serão alternadas
@@ -79,7 +89,7 @@ public class CrudCsv {
         window.setVisible(true);
     }
 
-    private static void criarAbaInicio(
+    private void criarAbaInicio(
         CardLayout card, JPanel cardConteudo
     ) {
         // Painel principal da tela de início
@@ -87,19 +97,19 @@ public class CrudCsv {
 
         // Painel esquerdo para funcionalidades
         JPanel menu = new JPanel(new BorderLayout());
-        menu.setBackground(fundoMenu);
+        menu.setBackground(BG_SEDUNDARIO);
         menu.setPreferredSize(new Dimension(250, 400));
 
         GridBagConstraints gbc = new GridBagConstraints();
 
         JPanel titulo = new JPanel(new GridBagLayout());
-        titulo.setBackground(fundoMenu);
+        titulo.setBackground(BG_SEDUNDARIO);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets.top = 30;
         JLabel txtTitulo = new JLabel("CRUD de Livros");
         txtTitulo.setFont(new Font("Georgia", Font.BOLD, 18));
-        txtTitulo.setForeground(bgBotao);
+        txtTitulo.setForeground(BG_BOTAO);
         titulo.add(txtTitulo, gbc);
         gbc.gridy = 1;
         gbc.insets.top = 3;
@@ -108,15 +118,15 @@ public class CrudCsv {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         JSeparator linhaHorizontal = new JSeparator();
-        linhaHorizontal.setForeground(bgBotao);
+        linhaHorizontal.setForeground(BG_BOTAO);
         linhaHorizontal.setPreferredSize(new Dimension(0, 2));
         titulo.add(linhaHorizontal, gbc);
         menu.add(titulo, BorderLayout.NORTH);
 
         // Painel inferior esquerdo para botão de saída
         JPanel saida = new JPanel(new BorderLayout());
-        saida.setBackground(fundoMenu);
-        Button sair = new Button("[🡐", bgBotao2, branco, hoverBotao2);
+        saida.setBackground(BG_SEDUNDARIO);
+        Button sair = new Button("[🡐", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
         sair.setMargin(new Insets(0, 3, 0, 0));
         sair.setFont(new Font(null, Font.PLAIN, 24));
         sair.setPreferredSize(new Dimension(40, 50));
@@ -125,7 +135,7 @@ public class CrudCsv {
 
         // Painel para os botões das operações CRUD
         JPanel botoesCrud = new JPanel(new GridBagLayout());
-        botoesCrud.setBackground(fundoMenu);
+        botoesCrud.setBackground(BG_SEDUNDARIO);
         gbc.insets = new Insets(5, 10, 5, 10);  // Espaçamentos
 
         Dimension tamanhoBotoes = new Dimension(0, 28);
@@ -134,36 +144,36 @@ public class CrudCsv {
         gbc.gridx = 0;
         gbc.gridy = 0;
         Button adicionar = new Button(
-            "Adicionar", bgBotao, azulClaro, hoverBotao
+            "Adicionar", BG_BOTAO, AZUL_CLARO, HOVER_BOTAO
         );
-        adicionar.setFont(fontBotoes);
+        adicionar.setFont(FONT_BOTOES);
         adicionar.setPreferredSize(tamanhoBotoes);
         botoesCrud.add(adicionar, gbc);
 
         // Botão 2 - Consultar
         gbc.gridy = 1;
         Button consultar = new Button(
-            "Consultar", bgBotao, azulClaro, hoverBotao
+            "Consultar", BG_BOTAO, AZUL_CLARO, HOVER_BOTAO
         );
-        consultar.setFont(fontBotoes);
+        consultar.setFont(FONT_BOTOES);
         consultar.setPreferredSize(tamanhoBotoes);
         botoesCrud.add(consultar, gbc);
 
         // Botão 3 - Ataulizar
         gbc.gridy = 2;
         Button atualizar = new Button(
-            "Atualizar", bgBotao, azulClaro, hoverBotao
+            "Atualizar", BG_BOTAO, AZUL_CLARO, HOVER_BOTAO
         );
-        atualizar.setFont(fontBotoes);
+        atualizar.setFont(FONT_BOTOES);
         atualizar.setPreferredSize(tamanhoBotoes);
         botoesCrud.add(atualizar, gbc);
 
         // Botão 4 - Apagar
         gbc.gridy = 3;
         Button apagar = new Button(
-            "Apagar", bgBotao, azulClaro, hoverBotao
+            "Apagar", BG_BOTAO, AZUL_CLARO, HOVER_BOTAO
         );
-        apagar.setFont(fontBotoes);
+        apagar.setFont(FONT_BOTOES);
         apagar.setPreferredSize(tamanhoBotoes);
         botoesCrud.add(apagar, gbc);
 
@@ -173,7 +183,7 @@ public class CrudCsv {
 
         // Painel direito para mostrar um banner
         JPanel banner = new JPanel(new GridBagLayout());
-        banner.setBackground(fundoPrimario);
+        banner.setBackground(BG_PRIMARIO);
         banner.setPreferredSize(new Dimension(350, 400));
 
         gbc.insets = new Insets(1, 5, 1, 5);  // Espaçamentos
@@ -202,7 +212,7 @@ public class CrudCsv {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 4;
         JSeparator linhaHorizontal2 = new JSeparator();
-        linhaHorizontal2.setForeground(azulClaro);
+        linhaHorizontal2.setForeground(AZUL_CLARO);
         banner.add(linhaHorizontal2, gbc);
         gbc.gridy = 3;
         gbc.insets.top = 3;
@@ -246,13 +256,13 @@ public class CrudCsv {
         });
     }
 
-    private static void criarAbaAdicionar(
+    private void criarAbaAdicionar(
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelAdicionar = new Panel(0, card, cardConteudo);
 
         JPanel camposDados = new JPanel(new GridBagLayout());
-        camposDados.setBackground(branco);
+        camposDados.setBackground(BRANCO);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(20, 20, 0, 5);
         gbc.gridx = 0;
@@ -279,9 +289,8 @@ public class CrudCsv {
         gbc.gridy = 1;
         camposDados.add(autorLivro, gbc);
 
-        // TextField anoLivro = new TextField();
         Spinner anoLivro = new Spinner(
-            new SpinnerNumberModel(2026, 1, 2026, 1)
+            new SpinnerNumberModel(ANOATUAL, 1, ANOATUAL, 1)
         );
         gbc.gridy = 2;
         camposDados.add(anoLivro, gbc);
@@ -307,25 +316,87 @@ public class CrudCsv {
         gbc.insets.top = 15;
         gbc.gridwidth = 2;
         JPanel botoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        botoes.setBackground(branco);
-        Button limpar = new Button("Limpar", bgBotao2, branco, hoverBotao2);
+        botoes.setBackground(BRANCO);
+        Button limpar = new Button("Limpar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
         limpar.setPreferredSize(new Dimension(100, 28));
         botoes.add(limpar);
-        Button salvar = new Button("Salvar", bgBotao2, branco, hoverBotao2);
+        Button salvar = new Button("Salvar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
         salvar.setPreferredSize(new Dimension(100, 28));
         botoes.add(salvar);
         camposDados.add(botoes, gbc);
         painelAdicionar.add2(camposDados, BorderLayout.NORTH);
 
         cardConteudo.add(painelAdicionar, "adicionar");
+
+        // Eventos
+        // Limpa os campos
+        limpar.addActionListener(e -> {
+            tituloLivro.setText("");
+            autorLivro.setText("");
+            anoLivro.setValue(ANOATUAL);
+            generoLivro.setSelectedIndex(0);
+        });
+
+        // Salvar um livro
+        salvar.addActionListener(e -> {
+            File arquivo = new File("livros.csv");
+
+            String msg = "";
+            boolean erro = false;
+
+            // Cria o arquivo, caso não exista
+            if (!arquivo.exists()) {
+                try (FileWriter writer = new FileWriter(arquivo)) {
+                    writer.write("Título;Autor;Ano;Gênero");
+                } catch (IOException err) {
+                    erro = true;
+                    err.printStackTrace();
+                    msg = "Erro ao criar arquivo 'livros.csv'.";
+                }
+            }
+
+            if (!erro) {
+                String novaLinha = tituloLivro.getText().trim().replace(";", ",") + ";" +
+                    autorLivro.getText().trim().replace(";", ",") + ";" +
+                    anoLivro.getValue().toString().trim() + ";" +
+                    generoLivro.getSelectedItem().toString().trim();
+
+                // Verifica se o mesmo livro já existe no arquivo
+                boolean duplicado = false;
+                try (BufferedReader reader = new BufferedReader(new FileReader(arquivo))) {
+                    String linha;
+                    while ((linha = reader.readLine()) != null) {
+                        if (linha.toLowerCase().equals(novaLinha.toLowerCase())) {
+                            duplicado = true;
+                            msg = "O livro já existe no arquivo!";
+                            break;
+                        }
+                    }
+                } catch (IOException err) {
+                    msg = "Erro ao ler 'livros.csv'.";
+                }
+
+                if (!duplicado) {
+                    try (FileWriter writer = new FileWriter(arquivo, true)) {
+                        writer.write("\n" + novaLinha);
+                        msg = "Livro salvo com sucesso!";
+                    } catch (IOException err) {
+                        msg = "Erro ao escrever em 'livros.csv'.";
+                    }
+                }
+
+                JOptionPane.showMessageDialog(null, msg);
+            }
+
+        });
     }
 
-    private static void criarAbaConsultar(
+    private void criarAbaConsultar(
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelConsultar = new Panel(1, card, cardConteudo);
         JPanel camposDados = new JPanel(new GridBagLayout());
-        camposDados.setBackground(branco);
+        camposDados.setBackground(BRANCO);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 15, 0, 15);
 
@@ -334,7 +405,7 @@ public class CrudCsv {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        botoes.setBackground(branco);
+        botoes.setBackground(BRANCO);
         // Label com texto
         botoes.add(new Rotulo("Burcar por"));
         // Opções de busca
@@ -353,7 +424,7 @@ public class CrudCsv {
             new Dimension(180, txtBusca.getPreferredSize().height)
         );
         botoes.add(txtBusca);
-        Button buscar = new Button("Buscar", bgBotao2, branco, hoverBotao2);
+        Button buscar = new Button("Buscar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
         buscar.setPreferredSize(new Dimension(80, 28));
         botoes.add(buscar);
         camposDados.add(botoes, gbc);
@@ -363,7 +434,7 @@ public class CrudCsv {
         gbc.fill = GridBagConstraints.BOTH;
         JPanel areaTabela = new JPanel(new BorderLayout());
         String[] colunas = {"Título", "Autor", "Ano", "Gênero"};
-        DefaultTableModel  dadosTabela = new DefaultTableModel(colunas, 0);
+        DefaultTableModel dadosTabela = new DefaultTableModel(colunas, 0);
         // Preenchimento para teste
         for (int i = 1; i < 40; i++) {
             dadosTabela.addRow(new Object[] {
@@ -383,12 +454,12 @@ public class CrudCsv {
         cardConteudo.add(painelConsultar, "consultar");
     }
 
-    private static void criarAbaAtualizar(
+    private void criarAbaAtualizar(
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelAtualizar = new Panel(2, card, cardConteudo);
         JPanel camposDados = new JPanel(new GridBagLayout());
-        camposDados.setBackground(branco);
+        camposDados.setBackground(BRANCO);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 15, 0, 15);
 
@@ -397,7 +468,7 @@ public class CrudCsv {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        botoes.setBackground(branco);
+        botoes.setBackground(BRANCO);
         // Label com texto
         botoes.add(new Rotulo("Burcar por"));
         // Opções de busca
@@ -416,7 +487,7 @@ public class CrudCsv {
             new Dimension(180, txtBusca.getPreferredSize().height)
         );
         botoes.add(txtBusca);
-        Button buscar = new Button("Buscar", bgBotao2, branco, hoverBotao2);
+        Button buscar = new Button("Buscar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
         buscar.setPreferredSize(new Dimension(80, 28));
         botoes.add(buscar);
         camposDados.add(botoes, gbc);
@@ -446,7 +517,7 @@ public class CrudCsv {
         gbc.gridy = 2;
         gbc.insets.top = 10;
         JPanel camposAtualizar = new JPanel(new GridBagLayout());
-        camposAtualizar.setBackground(branco);
+        camposAtualizar.setBackground(BRANCO);
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.insets = new Insets(5, 5, 0, 0);
         gbc2.weightx = 1.0;
@@ -455,7 +526,7 @@ public class CrudCsv {
         gbc2.gridwidth = 4;
         gbc2.insets.bottom = 5;
         Button atualizar = new Button(
-            "Atualizar", bgBotao2, branco, hoverBotao2
+            "Atualizar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2
         );
         atualizar.setPreferredSize(
             new Dimension(150, 26)
@@ -520,8 +591,6 @@ public class CrudCsv {
             if (!e.getValueIsAdjusting()) {
                 int linha = tabela.getSelectedRow();
                 if (linha != -1) {
-                    // System.out.println("Título: " + tabela.getValueAt(linha, 0));
-                    // System.out.println(" Autor: " + tabela.getValueAt(linha, 1));
                     titulo.setText(tabela.getValueAt(linha, 0).toString());
                     autor.setText(tabela.getValueAt(linha, 1).toString());
                     anoPublicacao.setValue(tabela.getValueAt(linha, 2));
@@ -531,13 +600,13 @@ public class CrudCsv {
         });
     }
 
-    private static void criarAbaApagar(
+    private void criarAbaApagar(
         CardLayout card, JPanel cardConteudo
     ) {
         Panel painelApagar = new Panel(3, card, cardConteudo);
 
         JPanel camposDados = new JPanel(new GridBagLayout());
-        camposDados.setBackground(branco);
+        camposDados.setBackground(BRANCO);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 15, 0, 15);
 
@@ -546,7 +615,7 @@ public class CrudCsv {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        botoes.setBackground(branco);
+        botoes.setBackground(BRANCO);
         // Label com texto
         botoes.add(new Rotulo("Burcar por"));
         // Opções de busca
@@ -565,7 +634,7 @@ public class CrudCsv {
             new Dimension(180, txtBusca.getPreferredSize().height)
         );
         botoes.add(txtBusca);
-        Button buscar = new Button("Buscar", bgBotao2, branco, hoverBotao2);
+        Button buscar = new Button("Buscar", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2);
         buscar.setPreferredSize(new Dimension(80, 28));
         botoes.add(buscar);
         camposDados.add(botoes, gbc);
@@ -593,7 +662,7 @@ public class CrudCsv {
 
         // Botão de esxluir
         Button excluir = new Button(
-            "Excluir", bgBotao2, branco, hoverBotao2
+            "Excluir", BG_BOTAO_2, BRANCO, HOVER_BOTAO_2
         );
         excluir.setPreferredSize(new Dimension(200, 26));
         gbc.gridy = 2;
@@ -605,7 +674,7 @@ public class CrudCsv {
     }
 
     private static class Window extends JFrame {
-        public Window(String titulo) {
+        Window(String titulo) {
             super(titulo);
             // Configurações da janela
             this.setSize(600, 400);
@@ -616,14 +685,14 @@ public class CrudCsv {
     }
 
     private static class Rotulo extends JLabel {
-        public Rotulo(String texto) {
+        Rotulo(String texto) {
             super(texto);
             this.setFont(new Font("Arial", Font.PLAIN, 14));
         }
     }
 
     private static class Label extends JLabel {
-        public Label(String texto, int tipo) {
+        Label(String texto, int tipo) {
             super(texto);
 
             switch (tipo) {
@@ -642,14 +711,14 @@ public class CrudCsv {
         private void letra() {
             this.setFont(new Font("Arial", Font.BOLD, 56));
             this.setPreferredSize(new Dimension(64, 64));
-            this.setForeground(branco);
-            this.setBackground(azulClaro);
+            this.setForeground(BRANCO);
+            this.setBackground(AZUL_CLARO);
             this.setOpaque(true);  // Mostra background do label
         }
 
         private void texto() {
             this.setFont(new Font("Arial", Font.BOLD, 12));
-            this.setForeground(cinza);
+            this.setForeground(CINZA);
         }
     }
 
@@ -678,7 +747,7 @@ public class CrudCsv {
     }
 
     private static class ComboBox extends JComboBox<String> {
-        public ComboBox(String[] arg0) {
+        ComboBox(String[] arg0) {
             super(arg0);
             personalizar();
         }
@@ -687,14 +756,14 @@ public class CrudCsv {
             // Utiliza um ComboBoxUI personalizado
             this.setUI(new ComboBoxUI());
             // Cor, tamanho e fonte
-            this.setBackground(branco);
+            this.setBackground(BRANCO);
             this.setFont(new Font("Arial", Font.PLAIN, 14));
             this.setPreferredSize(new Dimension(90, 28));
             // Cria uma borda
             this.setBorder(
                 BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(
-                        azulClaro, 1
+                        AZUL_CLARO, 1
                     ),
                     BorderFactory.createEmptyBorder(2, 5, 2, 5)
             ));
@@ -702,29 +771,29 @@ public class CrudCsv {
     }
 
     private static class Spinner extends JSpinner {
-        public Spinner(SpinnerModel model) {
+        Spinner(SpinnerModel model) {
             super(model);
 
-            this.setBackground(branco);
+            this.setBackground(BRANCO);
             this.setFont(new Font("Arial", Font.PLAIN, 16));
             this.setPreferredSize(new Dimension(90, 28));
             this.setBorder(
                 BorderFactory.createLineBorder(
-                    azulClaro, 1
+                    AZUL_CLARO, 1
                 )
             );
         }
     }
 
     private static class TextField extends JTextField {
-        public TextField() {
+        TextField() {
             this.setFont(new Font("Arial", Font.PLAIN, 16));
             int width = this.getPreferredSize().width;
             this.setPreferredSize(new Dimension(width, 28));
             this.setBorder(
                 BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(
-                        azulClaro, 1
+                        AZUL_CLARO, 1
                     ),
                     BorderFactory.createEmptyBorder(2, 5, 2, 5)
             ));
@@ -749,7 +818,7 @@ public class CrudCsv {
     }
 
     private static class Table extends JTable {
-        public Table(TableModel dm){
+        Table(TableModel dm){
             super(dm);
 
             this.setDefaultRenderer(
@@ -760,17 +829,17 @@ public class CrudCsv {
             // Cabeçalho
             JTableHeader header = this.getTableHeader();
             header.setFont( new Font("Arial", Font.BOLD, 12));
-            header.setBackground(azulClaro);
-            header.setForeground(branco);
+            header.setBackground(AZUL_CLARO);
+            header.setForeground(BRANCO);
             header.setPreferredSize(new Dimension(0, 20));
 
             this.setFont(new Font("Arial", Font.PLAIN, 12));
             this.setRowHeight(20);
-            this.setBackground(branco);
+            this.setBackground(BRANCO);
             this.setForeground(Color.BLACK);
 
             // Cor da seleção
-            this.setSelectionBackground(bgBotao);
+            this.setSelectionBackground(BG_BOTAO);
             this.setSelectionForeground(Color.BLACK);
 
             // Remove o grid
@@ -786,21 +855,21 @@ public class CrudCsv {
         // Painel onde uma instância adiciona o conteúdo
         private JPanel conteudo = new JPanel(new BorderLayout());
 
-        public Panel(
+        Panel(
             int indiceLetra, CardLayout card, JPanel cardConteudo
         ) {
             this.setLayout(new BorderLayout());
-            this.setBackground(branco);
+            this.setBackground(BRANCO);
 
             JPanel barraLateral = new JPanel(new BorderLayout());
-            barraLateral.setBackground(branco);
+            barraLateral.setBackground(BRANCO);
 
             JPanel voltar = new JPanel(new BorderLayout());
-            voltar.setBackground(branco);
+            voltar.setBackground(BRANCO);
             Button btVoltar = new Button(
-                " < Início", bgBotao, azulClaro, hoverBotao
+                " < Início", BG_BOTAO, AZUL_CLARO, HOVER_BOTAO
             );
-            btVoltar.setFont(fontBotoes);
+            btVoltar.setFont(FONT_BOTOES);
             btVoltar.setMargin(new Insets(2, 2, 0, 0));
             btVoltar.setOpaque(false);
             voltar.add(btVoltar, BorderLayout.WEST);
@@ -808,7 +877,7 @@ public class CrudCsv {
             barraLateral.add(voltar, BorderLayout.NORTH);
 
             JPanel crud = new JPanel(new GridBagLayout());
-            crud.setBackground(branco);
+            crud.setBackground(BRANCO);
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.insets = new Insets(0, 10, 10, 10);  // Espaçamentos
 
@@ -825,8 +894,8 @@ public class CrudCsv {
                 gbc.gridy = indice;
                 if (indice == indiceLetra) {
                     Label letra = new Label(letras[indice], 1);
-                    letra.setBackground(bgBotao);
-                    letra.setForeground(azulClaro);
+                    letra.setBackground(BG_BOTAO);
+                    letra.setForeground(AZUL_CLARO);
                     crud.add(letra, gbc);
 
                     // Área central
@@ -834,7 +903,7 @@ public class CrudCsv {
 
                     // Painel superior de título
                     JPanel titulo = new JPanel(new GridBagLayout());
-                    titulo.setBackground(branco);
+                    titulo.setBackground(BRANCO);
                     GridBagConstraints gbc2 = new GridBagConstraints();
                     gbc2.insets = new Insets(10, 20, 0, 0);
                     gbc2.gridx = 0;
@@ -849,7 +918,7 @@ public class CrudCsv {
 
                     // Separador
                     JSeparator sep = new JSeparator();
-                    sep.setForeground(azulClaro);
+                    sep.setForeground(AZUL_CLARO);
                     gbc2.insets = new Insets(5, 15, 0, 15);
                     gbc2.gridx = 0;
                     gbc2.gridy = 1;
@@ -861,7 +930,7 @@ public class CrudCsv {
                     painelPrincipal.add(titulo, BorderLayout.NORTH);
 
                     // Painel central
-                    conteudo.setBackground(branco);
+                    conteudo.setBackground(BRANCO);
                     painelPrincipal.add(conteudo, BorderLayout.CENTER);
 
                     this.add(painelPrincipal, BorderLayout.CENTER);
@@ -879,13 +948,13 @@ public class CrudCsv {
             });
         }
 
-        public void add2(Component comp, Object constraints) {
+        void add2(Component comp, Object constraints) {
             conteudo.add(comp, constraints);
         }
     }
 
     private static class Button extends JButton {
-        public Button(String texto, Color bg, Color fg, Color hover) {
+        Button(String texto, Color bg, Color fg, Color hover) {
             super(texto);
 
             // Sobreescreve os métodos de eventos do mouse no botão
