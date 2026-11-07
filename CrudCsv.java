@@ -346,9 +346,34 @@ public class CrudCsv {
 
         // Salvar um livro
         salvar.addActionListener(e -> {
+            // Verifica se os campos foram preenchidos
+            if (tituloLivro.getText().trim().isEmpty() || autorLivro.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(
+                    null, "Preencha todos os campos antes de salvar.",
+                    "Campo vazio",
+                    JOptionPane.WARNING_MESSAGE
+                );
+
+                return ;
+            }
+
+            // Cria um objeto Livro com os dados dos campos
+            Livro novoLivro = new Livro(
+                tituloLivro.getText(),
+                autorLivro.getText(),
+                (int) anoLivro.getValue(),
+                generoLivro.getSelectedItem().toString()
+            );
+
+            // Arquivo CSV
             File arquivo = new File("livros.csv");
 
+            // Mensagem na tela
             String msg = "";
+            String tituloMsg = "";
+            int icone = JOptionPane.INFORMATION_MESSAGE;
+
+            // Indica erro de arquivo
             boolean erro = false;
 
             // Cria o arquivo, caso não exista
@@ -359,42 +384,47 @@ public class CrudCsv {
                     erro = true;
                     err.printStackTrace();
                     msg = "Erro ao criar arquivo 'livros.csv'.";
+                    tituloMsg = "Erro de arquivo";
+                    icone = JOptionPane.ERROR_MESSAGE;
                 }
             }
 
             if (!erro) {
-                String novaLinha = tituloLivro.getText().trim().replace(";", ",") + ";" +
-                    autorLivro.getText().trim().replace(";", ",") + ";" +
-                    anoLivro.getValue().toString().trim() + ";" +
-                    generoLivro.getSelectedItem().toString().trim();
-
                 // Verifica se o mesmo livro já existe no arquivo
                 boolean duplicado = false;
                 try (BufferedReader reader = new BufferedReader(new FileReader(arquivo))) {
                     String linha;
                     while ((linha = reader.readLine()) != null) {
-                        if (linha.toLowerCase().equals(novaLinha.toLowerCase())) {
+                        if (linha.toLowerCase().equals(novoLivro.toCsv().toLowerCase())) {
                             duplicado = true;
                             msg = "O livro já existe no arquivo!";
+                            tituloMsg = "Livro duplicado";
+                            icone = JOptionPane.WARNING_MESSAGE;
                             break;
                         }
                     }
                 } catch (IOException err) {
+                    erro = true;
                     msg = "Erro ao ler 'livros.csv'.";
+                    tituloMsg = "Erro de arquivo";
+                    icone = JOptionPane.ERROR_MESSAGE;
                 }
 
-                if (!duplicado) {
+                if (!duplicado && !erro) {
                     try (FileWriter writer = new FileWriter(arquivo, true)) {
-                        writer.write("\n" + novaLinha);
+                        writer.write("\n" + novoLivro.toCsv());
                         msg = "Livro salvo com sucesso!";
+                        tituloMsg = "Sucesso";
+                        icone = JOptionPane.INFORMATION_MESSAGE;
                     } catch (IOException err) {
                         msg = "Erro ao escrever em 'livros.csv'.";
+                        tituloMsg = "Erro de arquivo";
+                        icone = JOptionPane.ERROR_MESSAGE;
                     }
                 }
 
-                JOptionPane.showMessageDialog(null, msg);
+                JOptionPane.showMessageDialog(null, msg, tituloMsg, icone);
             }
-
         });
 
         // Limpar os campos ao sair da tela
@@ -579,6 +609,67 @@ public class CrudCsv {
                 telaApagarBusca.getTxtBusca().setText("");
             }
         });
+    }
+
+    private static class Livro {
+        private String titulo;
+        private String autor;
+        private int ano;
+        private String genero;
+
+        Livro(String titulo, String autor, int ano, String genero) {
+            this.titulo = titulo;
+            this.autor = autor;
+            this.ano = ano;
+            this.genero = genero;
+        }
+
+        String getTitulo() {
+            return titulo;
+        }
+
+        String getAutor() {
+            return autor;
+        }
+
+        int getAno() {
+            return ano;
+        }
+
+        String getGenero() {
+            return genero;
+        }
+
+        // Formado da linha para salvar no arquivo CSV
+        String toCsv() {
+            return titulo.trim().replace(";", ",") + ";" +
+                autor.trim().replace(";", ",") + ";" +
+                ano + ";" + genero.trim();
+        }
+
+        Object[] toLinhaTabela() {
+            return new Object[]{titulo, autor, ano, genero};
+        }
+
+        // Cria um objeto livro a partir de uma linha do CSV
+        static Livro fromCsv(String linhaCsv) {
+            String[] dados = linhaCsv.split(";");
+
+            if (dados.length == 4) {
+                try {
+                    return new Livro(
+                        dados[0],  // título
+                        dados[1],  // autor
+                        Integer.parseInt(dados[2]),  // ano
+                        dados[3]  // gênero
+                    );
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+
+            return null;
+        }
     }
 
     private static class PainelBuscaTabela extends JPanel {
