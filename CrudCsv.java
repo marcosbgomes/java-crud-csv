@@ -24,6 +24,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.Object;
 import java.time.Year;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -41,6 +43,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.plaf.metal.MetalComboBoxUI;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -71,7 +74,11 @@ public class CrudCsv {
     // Fontes
     private static final Font FONT_BOTOES = new Font("Arial", Font.BOLD, 14);
 
+    // Ano atual
     private static final int ANOATUAL = Year.now().getValue();
+
+    // Arquivo CSV
+    private static final File ARQUIVO_CSV = new File("livros.csv");
 
     public static void main(String[] args) {
         CrudCsv app = new CrudCsv();
@@ -356,7 +363,6 @@ public class CrudCsv {
                     "Campo vazio",
                     JOptionPane.WARNING_MESSAGE
                 );
-
                 return ;
             }
 
@@ -368,9 +374,6 @@ public class CrudCsv {
                 generoLivro.getSelectedItem().toString()
             );
 
-            // Arquivo CSV
-            File arquivo = new File("livros.csv");
-
             // Mensagem na tela
             String msg = "";
             String tituloMsg = "";
@@ -380,8 +383,8 @@ public class CrudCsv {
             boolean erro = false;
 
             // Cria o arquivo, caso não exista
-            if (!arquivo.exists()) {
-                try (FileWriter writer = new FileWriter(arquivo)) {
+            if (!ARQUIVO_CSV.exists()) {
+                try (FileWriter writer = new FileWriter(ARQUIVO_CSV)) {
                     writer.write("Título;Autor;Ano;Gênero");
                 } catch (IOException err) {
                     erro = true;
@@ -395,7 +398,7 @@ public class CrudCsv {
             if (!erro) {
                 // Verifica se o mesmo livro já existe no arquivo
                 boolean duplicado = false;
-                try (BufferedReader reader = new BufferedReader(new FileReader(arquivo))) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(ARQUIVO_CSV))) {
                     String linha;
                     while ((linha = reader.readLine()) != null) {
                         if (linha.toLowerCase().equals(novoLivro.toCsv().toLowerCase())) {
@@ -414,7 +417,7 @@ public class CrudCsv {
                 }
 
                 if (!duplicado && !erro) {
-                    try (FileWriter writer = new FileWriter(arquivo, true)) {
+                    try (FileWriter writer = new FileWriter(ARQUIVO_CSV, true)) {
                         writer.write("\n" + novoLivro.toCsv());
                         msg = "Livro salvo com sucesso!";
                         tituloMsg = "Sucesso";
@@ -574,6 +577,101 @@ public class CrudCsv {
                 genero.setSelectedIndex(0);
             }
         });
+
+        // Atualizat livro
+        atualizar.addActionListener(e -> {
+            int linhaSelecionada = telaAtualizarBusca.getTabela().getSelectedRow();
+            if (linhaSelecionada == -1) return;
+
+            int confirmar = JOptionPane.showConfirmDialog(
+                null,
+                "Atualizar livro selecionado?",
+                "Confirmar atualização",
+                JOptionPane.YES_NO_OPTION
+            );
+            if (confirmar != JOptionPane.YES_OPTION) return;
+
+            String novoTitulo = titulo.getText().trim();
+            String novoAutor = autor.getText().trim();
+            if (novoTitulo.isEmpty() || novoAutor.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                    null, "Preencha o Título e o Autor.",
+                    "Campo vazio",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            Livro livroAtualizado = new Livro(
+                novoTitulo,
+                novoAutor,
+                (int) anoPublicacao.getValue(),
+                genero.getSelectedItem().toString()
+            );
+
+            List<String> linhas = new ArrayList<>();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(ARQUIVO_CSV))) {
+                String linha;
+                while ((linha = reader.readLine()) != null) {
+                    linhas.add(linha);
+                }
+            } catch (IOException err) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Erro ao abrir arquivo.",
+                    "Erro de arquivo",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Atualiza a linha na lista para salvar no arquivo
+            linhas.set(linhaSelecionada + 1, livroAtualizado.toCsv());
+
+            // Salva as linhas no arquivo com a nova linha atualizada
+            try (FileWriter writer = new FileWriter(ARQUIVO_CSV)) {
+                for (int i = 0; i < linhas.size(); i++) {
+                    writer.write(linhas.get(i) + (i < linhas.size() - 1 ? "\n" : ""));
+                }
+
+                // Atualiza os dados da tabela
+                DefaultTableModel dadosTabel = telaAtualizarBusca.getDadosTabela();
+                dadosTabel.setValueAt(livroAtualizado.getTitulo(), linhaSelecionada, 0);
+                dadosTabel.setValueAt(livroAtualizado.getAutor(), linhaSelecionada, 1);
+                dadosTabel.setValueAt(livroAtualizado.getAno(), linhaSelecionada, 2);
+                dadosTabel.setValueAt(livroAtualizado.getGenero(), linhaSelecionada, 3);
+
+                // Remove seleção e limpa os campos
+                telaAtualizarBusca.getTabela().clearSelection();
+
+                // Seleciona a linha atualizada após 0.5 segundo 
+                Timer timer = new Timer(500, evento -> {
+                    telaAtualizarBusca.getTabela().setRowSelectionInterval(
+                        linhaSelecionada, linhaSelecionada
+                    );
+
+                    // Pega as coordenada da linha selecionada na tabela
+                    Rectangle coordenadasLinha = telaAtualizarBusca.getTabela().getCellRect(
+                        linhaSelecionada, confirmar, true
+                    );
+                    // Rola a barra
+                    telaAtualizarBusca.getTabela().scrollRectToVisible(coordenadasLinha);
+
+                    telaAtualizarBusca.getTabela().requestFocus();
+                });
+                timer.setRepeats(false);
+                timer.start();
+
+            } catch (IOException err) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Erro ao gravar no arquivo.",
+                    "Erro de arquivo",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
+        });
     }
 
     private void criarTelaApagar(
@@ -604,12 +702,61 @@ public class CrudCsv {
         painelApagar.add2(camposDados, BorderLayout.NORTH);
         cardConteudo.add(painelApagar, "apagar");
 
-        // Limpas os camos de busca
+        // Limpas os campos de busca
         painelApagar.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentHidden(ComponentEvent e) {
                 telaApagarBusca.getOpcaoBusca().setSelectedIndex(0);
                 telaApagarBusca.getTxtBusca().setText("");
+            }
+        });
+
+        // Evento do botão de excluir
+        excluir.addActionListener(e -> {
+            int linhaSelecionada = telaApagarBusca.getTabela().getSelectedRow();
+
+            if (linhaSelecionada == -1) return;
+
+            int confirmar = JOptionPane.showConfirmDialog(
+                null,
+                "Excluir livro selecionado?",
+                "Confirmar exclusão",
+                JOptionPane.YES_NO_OPTION
+            );
+            if (confirmar != JOptionPane.YES_OPTION) return;
+
+            List<String> linhas = new ArrayList<>();
+
+            // Ler as linhas do arquivo e salta na lista
+            try (BufferedReader reader = new BufferedReader(new FileReader(ARQUIVO_CSV))) {
+                String linha;
+                while ((linha = reader.readLine()) != null) {
+                    linhas.add(linha);
+                }
+            } catch (IOException err) {
+                JOptionPane.showMessageDialog(null, "Erro ao ler arquivo.");
+                return;
+            }
+
+            // remove a linha excluida (soma 1 para pular o cabeçalho)
+            linhas.remove(linhaSelecionada + 1);
+
+            // Sobrescreve o arquivo
+            try (FileWriter writer = new FileWriter(ARQUIVO_CSV)) {
+                for (int i = 0; i < linhas.size(); i++) {
+                    writer.write(linhas.get(i) + (i < linhas.size() - 1 ? "\n" : ""));
+                }
+
+                // Remove a linha da tabela
+                telaApagarBusca.getDadosTabela().removeRow(linhaSelecionada);
+
+            } catch (IOException err) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Erro ao gravar no arquivo.",
+                    "Erro de arquivo",
+                    JOptionPane.ERROR_MESSAGE
+                );
             }
         });
     }
