@@ -26,6 +26,7 @@ import java.lang.Object;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -49,6 +50,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.RowFilter;
 
 
 public class CrudCsv {
@@ -459,8 +462,7 @@ public class CrudCsv {
         painelConsultar.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentHidden(ComponentEvent e) {
-                telaConsultaBusca.getOpcaoBusca().setSelectedIndex(0);
-                telaConsultaBusca.getTxtBusca().setText("");
+                telaConsultaBusca.limparBusca();
             }
         });
     }
@@ -568,8 +570,7 @@ public class CrudCsv {
                 // Remove seleção da linha
                 telaAtualizarBusca.getTabela().clearSelection();
                 // Limpa texto de busca
-                telaAtualizarBusca.getOpcaoBusca().setSelectedIndex(0);
-                telaAtualizarBusca.getTxtBusca().setText("");
+                telaAtualizarBusca.limparBusca();
                 // Limpa os campos de atualização
                 titulo.setText("");
                 autor.setText("");
@@ -590,6 +591,9 @@ public class CrudCsv {
                 JOptionPane.YES_NO_OPTION
             );
             if (confirmar != JOptionPane.YES_OPTION) return;
+
+            Table tabela = telaAtualizarBusca.getTabela();
+            int linhaNoModelo = tabela.convertRowIndexToModel(linhaSelecionada);
 
             String novoTitulo = titulo.getText().trim();
             String novoAutor = autor.getText().trim();
@@ -627,7 +631,7 @@ public class CrudCsv {
             }
 
             // Atualiza a linha na lista para salvar no arquivo
-            linhas.set(linhaSelecionada + 1, livroAtualizado.toCsv());
+            linhas.set(linhaNoModelo + 1, livroAtualizado.toCsv());
 
             // Salva as linhas no arquivo com a nova linha atualizada
             try (FileWriter writer = new FileWriter(ARQUIVO_CSV)) {
@@ -637,26 +641,33 @@ public class CrudCsv {
 
                 // Atualiza os dados da tabela
                 DefaultTableModel dadosTabel = telaAtualizarBusca.getDadosTabela();
-                dadosTabel.setValueAt(livroAtualizado.getTitulo(), linhaSelecionada, 0);
-                dadosTabel.setValueAt(livroAtualizado.getAutor(), linhaSelecionada, 1);
-                dadosTabel.setValueAt(livroAtualizado.getAno(), linhaSelecionada, 2);
-                dadosTabel.setValueAt(livroAtualizado.getGenero(), linhaSelecionada, 3);
+                dadosTabel.setValueAt(livroAtualizado.getTitulo(), linhaNoModelo, 0);
+                dadosTabel.setValueAt(livroAtualizado.getAutor(), linhaNoModelo, 1);
+                dadosTabel.setValueAt(livroAtualizado.getAno(), linhaNoModelo, 2);
+                dadosTabel.setValueAt(livroAtualizado.getGenero(), linhaNoModelo, 3);
 
-                // Remove seleção e limpa os campos
+                // Remove seleção
                 telaAtualizarBusca.getTabela().clearSelection();
 
                 // Seleciona a linha atualizada após 0.5 segundo 
                 Timer timer = new Timer(500, evento -> {
-                    telaAtualizarBusca.getTabela().setRowSelectionInterval(
-                        linhaSelecionada, linhaSelecionada
+                    // Pega a linha caso a tabela tenha reordenado
+                    int novaLinha = telaAtualizarBusca.getTabela().convertRowIndexToView(
+                        linhaNoModelo
                     );
 
-                    // Pega as coordenada da linha selecionada na tabela
-                    Rectangle coordenadasLinha = telaAtualizarBusca.getTabela().getCellRect(
-                        linhaSelecionada, confirmar, true
-                    );
-                    // Rola a barra
-                    telaAtualizarBusca.getTabela().scrollRectToVisible(coordenadasLinha);
+                    if (novaLinha != -1) {
+                        telaAtualizarBusca.getTabela().setRowSelectionInterval(
+                            novaLinha, novaLinha
+                        );
+    
+                        // Pega as coordenada da linha selecionada na tabela
+                        Rectangle coordenadasLinha = telaAtualizarBusca.getTabela().getCellRect(
+                            novaLinha, 0, true
+                        );
+                        // Rola a barra
+                        telaAtualizarBusca.getTabela().scrollRectToVisible(coordenadasLinha);
+                    }
 
                     telaAtualizarBusca.getTabela().requestFocus();
                 });
@@ -706,15 +717,13 @@ public class CrudCsv {
         painelApagar.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentHidden(ComponentEvent e) {
-                telaApagarBusca.getOpcaoBusca().setSelectedIndex(0);
-                telaApagarBusca.getTxtBusca().setText("");
+                telaApagarBusca.limparBusca();
             }
         });
 
         // Evento do botão de excluir
         excluir.addActionListener(e -> {
             int linhaSelecionada = telaApagarBusca.getTabela().getSelectedRow();
-
             if (linhaSelecionada == -1) return;
 
             int confirmar = JOptionPane.showConfirmDialog(
@@ -724,6 +733,9 @@ public class CrudCsv {
                 JOptionPane.YES_NO_OPTION
             );
             if (confirmar != JOptionPane.YES_OPTION) return;
+
+            Table tabela = telaApagarBusca.getTabela();
+            int linhaNoModelo = tabela.convertRowIndexToModel(linhaSelecionada);
 
             List<String> linhas = new ArrayList<>();
 
@@ -739,7 +751,7 @@ public class CrudCsv {
             }
 
             // remove a linha excluida (soma 1 para pular o cabeçalho)
-            linhas.remove(linhaSelecionada + 1);
+            linhas.remove(linhaNoModelo + 1);
 
             // Sobrescreve o arquivo
             try (FileWriter writer = new FileWriter(ARQUIVO_CSV)) {
@@ -748,7 +760,8 @@ public class CrudCsv {
                 }
 
                 // Remove a linha da tabela
-                telaApagarBusca.getDadosTabela().removeRow(linhaSelecionada);
+                telaApagarBusca.getTabela().clearSelection();
+                telaApagarBusca.getDadosTabela().removeRow(linhaNoModelo);
 
             } catch (IOException err) {
                 JOptionPane.showMessageDialog(
@@ -829,6 +842,9 @@ public class CrudCsv {
         private Table tabela;
         private DefaultTableModel dadosTabela;
 
+        // Para realizar as buscas filtradas
+        private TableRowSorter<DefaultTableModel> filtro;
+
         PainelBuscaTabela(int alturaTabela) {
             this.setLayout(new GridBagLayout());
             this.setBackground(BRANCO);
@@ -875,6 +891,11 @@ public class CrudCsv {
             // Tabela
             this.tabela = new Table(this.dadosTabela);
             this.tabela.setDefaultEditor(Object.class, null);
+
+            // Filtro
+            this.filtro = new TableRowSorter<>(this.dadosTabela);
+            this.tabela.setRowSorter(this.filtro);
+
             // Painel com barra de rolagem
             JScrollPane painelScroll = new JScrollPane(this.tabela);
             areaTabela .add(painelScroll, BorderLayout.CENTER);
@@ -883,6 +904,32 @@ public class CrudCsv {
             );
             // Adiciona a tabela no painel principal
             this.add(areaTabela, gbc);
+
+            // Evento do botão de busca
+            this.buscar.addActionListener(e -> {
+                String termo = this.txtBusca.getText().trim();
+                int indiceColuna = this.opcaoBusca.getSelectedIndex();
+
+                if (termo.isEmpty()) {
+                    this.filtro.setRowFilter(null);
+                } else {
+                    // O (?i) faz a busca ignorar maiúsculas/minúsculas.
+                    // O Pattern.quote protege a busca caso o usuário digite
+                    // caracteres especiais como () ou ?
+                    String regex = "(?i)" + Pattern.quote(termo);
+                    this.filtro.setRowFilter(RowFilter.regexFilter((regex), indiceColuna));
+                }
+            });
+        }
+
+        void setNovoFiltro(TableRowSorter<DefaultTableModel> novoFiltro) {
+            this.filtro = novoFiltro;
+        }
+
+        void limparBusca() {
+            this.txtBusca.setText("");
+            this.opcaoBusca.setSelectedIndex(0);
+            if (this.filtro != null) this.filtro.setRowFilter(null);
         }
 
         Table getTabela() {
@@ -892,30 +939,23 @@ public class CrudCsv {
         DefaultTableModel getDadosTabela() {
             return dadosTabela;
         }
-
-        Button getBotaoBusca() {
-            return buscar;
-        }
-
-        TextField getTxtBusca() {
-            return txtBusca;
-        }
-
-        ComboBox getOpcaoBusca() {
-            return opcaoBusca;
-        }
     }
 
     private void preencherTabela(PainelBuscaTabela telaTabela) {
         if (telaTabela == null) return;
 
+        // Limpa qualquer selecção antes de limpar a tabela
+        // telaTabela.getTabela().clearSelection();
+        telaTabela.limparBusca();
+
+        telaTabela.getTabela().setRowSorter(null);
+
         // Limpa as linhas da tabela
         telaTabela.getDadosTabela().setRowCount(0);
 
-        File arquivo = new File("livros.csv");
-        if (!arquivo.exists()) return;
+        if (!ARQUIVO_CSV.exists()) return;
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(arquivo))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(ARQUIVO_CSV))) {
             String linha = reader.readLine();  // Pula o cabeçalho
 
             while ((linha = reader.readLine()) != null) {
@@ -933,6 +973,12 @@ public class CrudCsv {
                 JOptionPane.ERROR_MESSAGE
             );
         }
+
+        TableRowSorter<DefaultTableModel> novoFiltro = new TableRowSorter<>(
+            telaTabela.getDadosTabela()
+        );
+        telaTabela.getTabela().setRowSorter(novoFiltro);
+        telaTabela.setNovoFiltro(novoFiltro);
     }
 
     private static class Window extends JFrame {
