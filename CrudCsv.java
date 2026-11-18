@@ -584,6 +584,41 @@ public class CrudCsv {
             int linhaSelecionada = telaAtualizarBusca.getTabela().getSelectedRow();
             if (linhaSelecionada == -1) return;
 
+            String novoTitulo = titulo.getText().trim();
+            String novoAutor = autor.getText().trim();
+
+            Livro livroAtualizado = new Livro(
+                novoTitulo,
+                novoAutor,
+                (int) anoPublicacao.getValue(),
+                genero.getSelectedItem().toString()
+            );
+
+            // Verifica duplicado
+            try (BufferedReader reader = new BufferedReader(new FileReader(ARQUIVO_CSV))) {
+                String linha;
+                while ((linha = reader.readLine()) != null) {
+                    if (linha.toLowerCase().equals(livroAtualizado.toCsv().toLowerCase())) {
+                        JOptionPane.showMessageDialog(
+                            null,
+                            "O livro já existe no arquivo!",
+                            "Livro duplicado",
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                        return;
+                    }
+                }
+            } catch (IOException err) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Erro ao ler 'livros.csv'.",
+                    "Erro de arquivo",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+
             int confirmar = JOptionPane.showConfirmDialog(
                 null,
                 "Atualizar livro selecionado?",
@@ -592,11 +627,6 @@ public class CrudCsv {
             );
             if (confirmar != JOptionPane.YES_OPTION) return;
 
-            Table tabela = telaAtualizarBusca.getTabela();
-            int linhaNoModelo = tabela.convertRowIndexToModel(linhaSelecionada);
-
-            String novoTitulo = titulo.getText().trim();
-            String novoAutor = autor.getText().trim();
             if (novoTitulo.isEmpty() || novoAutor.isEmpty()) {
                 JOptionPane.showMessageDialog(
                     null, "Preencha o Título e o Autor.",
@@ -605,13 +635,6 @@ public class CrudCsv {
                 );
                 return;
             }
-
-            Livro livroAtualizado = new Livro(
-                novoTitulo,
-                novoAutor,
-                (int) anoPublicacao.getValue(),
-                genero.getSelectedItem().toString()
-            );
 
             List<String> linhas = new ArrayList<>();
 
@@ -629,6 +652,9 @@ public class CrudCsv {
                 );
                 return;
             }
+
+            Table tabela = telaAtualizarBusca.getTabela();
+            int linhaNoModelo = tabela.convertRowIndexToModel(linhaSelecionada);
 
             // Atualiza a linha na lista para salvar no arquivo
             linhas.set(linhaNoModelo + 1, livroAtualizado.toCsv());
